@@ -1,18 +1,33 @@
 version: 2.1
     
-jobs:
+jobs: # creats job
   build:
     docker:
-      - image: cimg/node:16.6.2
+      - image: cimg/node:16.6.2 # place where it will be done
     steps:
       - checkout
-      - run:
-          working_directory: ~/project/units
-          name: Install Dependencies
-          command: npm ci
-      - run:
-          working_directory: ~/project/units
-          name: Run Tests
-          command: npm test
-  
-  
+      - save_cache: # Caches dependencies with a cache key (for us it will be units folder)
+          key: unit-tests
+          paths:
+            - ~/project
+  tests: 
+    docker:
+      - image: cimg/node:16.6.2
+    working_directory: ~/project/units # we are setting dir
+    steps:
+    - restore_cache: # Restores the cached dependency by our key name.
+        key: unit-tests
+    - run: # running commands
+        name: Install Dependencies
+        command: npm ci
+    - run:
+        working_directory: ~/project/units
+        name: Run Tests
+        command: npm test
+workflows:
+  build_and_test: # name of your workflow
+    jobs:
+      - build 
+      - tests:
+          requires:
+           - build # wait for build1 job to complete successfully before starting
